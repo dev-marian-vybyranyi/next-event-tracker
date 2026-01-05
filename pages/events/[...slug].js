@@ -1,4 +1,5 @@
 import { useRouter } from "next/router";
+
 import EventList from "../../components/events/EventList";
 import ResultsTitle from "../../components/events/results-title";
 import Button from "../../components/ui/Button";
@@ -6,9 +7,6 @@ import ErrorAlert from "../../components/ui/error-alert";
 import { getFilteredEvents } from "../../helpers/api-util";
 
 const FilteredEventsPage = (props) => {
-  const router = useRouter();
-  const filteredData = router.query.slug;
-
   if (props.hasError) {
     return (
       <>
@@ -22,7 +20,9 @@ const FilteredEventsPage = (props) => {
     );
   }
 
-  if (!props.events || props.events.length === 0) {
+  const { events, date } = props;
+
+  if (!events || events.length === 0) {
     return (
       <>
         <ErrorAlert>
@@ -35,12 +35,15 @@ const FilteredEventsPage = (props) => {
     );
   }
 
-  const date = new Date(props.date.year, props.date.month - 1);
+  const numYear = date.year;
+  const numMonth = date.month;
+
+  const resultDate = new Date(numYear, numMonth - 1);
 
   return (
     <>
-      <ResultsTitle date={date} />
-      <EventList items={props.events} />
+      <ResultsTitle date={resultDate} />
+      <EventList items={events} />
     </>
   );
 };
