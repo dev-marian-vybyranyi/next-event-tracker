@@ -1,5 +1,9 @@
-export default function handler(req, res) {
+import { MongoClient } from "mongodb";
+
+export default async function handler(req, res) {
   const eventId = req.query.eventId;
+
+  const client = await MongoClient.connect(process.env.MONGODB_URI);
 
   if (req.method === "POST") {
     const { email, name, text } = req.body;
@@ -9,11 +13,15 @@ export default function handler(req, res) {
     }
 
     const newComment = {
-      id: new Date().toISOString(),
       email,
       name,
       text,
+      eventId,
     };
+
+    const db = client.db();
+
+    await db.collection("commets").insertOne(newComment);
 
     res.status(201).json({ message: "Comment added!", comment: newComment });
   }
@@ -36,7 +44,9 @@ export default function handler(req, res) {
         text: "This is a third comment!",
       },
     ];
-    
+
     res.status(200).json({ comments });
   }
+
+  client.close();
 }

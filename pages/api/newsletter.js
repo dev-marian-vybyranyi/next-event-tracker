@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     const client = await MongoClient.connect(process.env.MONGODB_URI);
     const db = client.db();
 
-    await db.collection("emails").insertOne({ email: userEmail });
+    await db.collection("newsletters").insertOne({ email: userEmail });
     client.close();
 
     res.status(201).json({ message: "Signed up!" });
