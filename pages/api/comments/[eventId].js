@@ -1,14 +1,33 @@
-import { MongoClient } from "mongodb";
+import {
+  connectDatabase,
+  insertDocument,
+  getAllDocuments,
+} from "../../../helpers/db-util";
 
 export default async function handler(req, res) {
   const eventId = req.query.eventId;
 
-  const client = await MongoClient.connect(process.env.MONGODB_URI);
+  let client;
+
+  try {
+    client = await connectDatabase();
+  } catch (error) {
+    res.status(500).json({ message: "Connecting to the database failed!" });
+    return;
+  }
 
   if (req.method === "POST") {
     const { email, name, text } = req.body;
-    if (!email.includes("@" || !name || name.trim() === "" || !text)) {
+
+    if (
+      !email.includes("@") ||
+      !name ||
+      name.trim() === "" ||
+      !text ||
+      text.trim() === ""
+    ) {
       res.status(422).json({ message: "Invalid input." });
+      client.close();
       return;
     }
 
@@ -19,23 +38,27 @@ export default async function handler(req, res) {
       eventId,
     };
 
-    const db = client.db();
-
-    await db.collection("commets").insertOne(newComment);
-
-    res.status(201).json({ message: "Comment added!", comment: newComment });
+    try {
+      const result = await insertDocument(client, "commets", newComment);
+      newComment._id = result.insertedId;
+      res.status(201).json({ message: "Added comment.", comment: newComment });
+    } catch (error) {
+      res.status(500).json({ message: "Inserting comment failed!" });
+    }
   }
 
   if (req.method === "GET") {
-    const db = client.db();
-
-    const documents = await db
-      .collection("commets")
-      .find({ eventId })
-      .sort({ _id: -1 })
-      .toArray();
-
-    res.status(200).json({ comments: documents });
+    try {
+      const documents = await getAllDocuments(
+        client,
+        "commets",
+        { _id: -1 },
+        { eventId: eventId }
+      );
+      res.status(200).json({ comments: documents });
+    } catch (error) {
+      res.status(500).json({ message: "Getting comments failed!" });
+    }
   }
 
   client.close();
