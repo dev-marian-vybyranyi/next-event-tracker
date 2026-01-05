@@ -27,25 +27,15 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "GET") {
-    const comments = [
-      {
-        id: "c1",
-        name: "Max",
-        text: "This is a first comment!",
-      },
-      {
-        id: "c2",
-        name: "Manuel",
-        text: "This is a second comment!",
-      },
-      {
-        id: "c3",
-        name: "Sarah",
-        text: "This is a third comment!",
-      },
-    ];
+    const db = client.db();
 
-    res.status(200).json({ comments });
+    const documents = await db
+      .collection("commets")
+      .find({ eventId })
+      .sort({ _id: -1 })
+      .toArray();
+
+    res.status(200).json({ comments: documents });
   }
 
   client.close();
