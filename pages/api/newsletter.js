@@ -1,12 +1,20 @@
-export default function handler(req, res) {
-    if (req.method === 'POST') {
-        const userEmail = req.body.email;
+import { MongoClient } from "mongodb";
 
-        if (!userEmail || !userEmail.includes('@')) {
-            res.status(422).json({ message: 'Invalid email address.' });
-            return;
-        }
+export default async function handler(req, res) {
+  if (req.method === "POST") {
+    const userEmail = req.body.email;
 
-        res.status(201).json({ message: 'Signed up!' });
+    if (!userEmail || !userEmail.includes("@")) {
+      res.status(422).json({ message: "Invalid email address." });
+      return;
     }
+
+    const client = await MongoClient.connect(process.env.MONGODB_URI);
+    const db = client.db();
+
+    await db.collection("emails").insertOne({ email: userEmail });
+    client.close();
+
+    res.status(201).json({ message: "Signed up!" });
+  }
 }
